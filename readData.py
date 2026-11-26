@@ -2,20 +2,21 @@
 from pathlib import Path
 import os
 import pandas as pd
+import streamlit as st
 from dotenv import load_dotenv
 
 base = Path(__file__).resolve().parent
 load_dotenv(base / ".env")
 
 data_paths = [
-    os.getenv("DATA_PATH_1"),
-    os.getenv("DATA_PATH_2"),
-    os.getenv("DATA_PATH_3")
+    st.secrets.get("DATA_PATH_1", os.getenv("DATA_PATH_1")),
+    st.secrets.get("DATA_PATH_2", os.getenv("DATA_PATH_2")),
+    st.secrets.get("DATA_PATH_3", os.getenv("DATA_PATH_3"))
 ]
 
 if any(path is None or path.strip() == "" for path in data_paths):
     raise ValueError(
-        "One or more data paths are missing in the .env file."
+        "One or more data paths are missing in the configuration."
     )
 
 dataframes = []
