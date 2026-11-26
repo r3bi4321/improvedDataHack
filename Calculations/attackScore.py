@@ -52,11 +52,17 @@ def normalize_id(value):
 
 
 def parse_coordinate(coordinate):
-    if pd.isna(coordinate):
+    if coordinate is None:
         return None
 
     try:
-        position = ast.literal_eval(coordinate)
+        if pd.isna(coordinate):
+            return None
+    except (ValueError, TypeError):
+        return None
+
+    try:
+        position = ast.literal_eval(str(coordinate))
         return float(position[0]), float(position[1])
 
     except (ValueError, TypeError, SyntaxError, IndexError):
@@ -185,6 +191,7 @@ def calculate_shot_pressure(shot):
     Beruecksichtigt die Position des Schuetzen und die
     Positionen der gegnerischen Feldspieler.
     """
+
     position = get_shot_position(shot)
     opponents = get_opponent_positions(shot)
 
@@ -318,11 +325,17 @@ def calculate_attack_score_for_shot(
     selected_shot,
     df,
     shooter_slot=None,
-    goal_x=None
+    goal_x=None,
+    shot_speed=None
 ):
     """
     Berechnet den gesamten AttackScore eines Schusses.
+
+    shot_speed:
+        Optionaler simulierter Schussgeschwindigkeitswert.
+        Falls None, wird die Originalgeschwindigkeit verwendet.
     """
+
     shot_position = get_shot_position(
         selected_shot,
         shooter_slot
@@ -366,14 +379,16 @@ def calculate_attack_score_for_shot(
         min(100, 100 * (1 - angle / 90))
     )
 
-    shot_speed = selected_shot["ShotSpeed"]
+    # Simulierte oder originale Schussgeschwindigkeit
+    if shot_speed is None:
+        shot_speed = selected_shot["ShotSpeed"]
 
     if pd.isna(shot_speed):
         return None
 
     V = max(
         0,
-        min(100, shot_speed)
+        min(100, float(shot_speed))
     )
 
     entry_to_shot = calculate_entry_to_shot_time(

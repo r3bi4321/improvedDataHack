@@ -58,11 +58,17 @@ with st.sidebar:
 
 
 def parse_coordinate(coordinate):
-    if pd.isna(coordinate):
+    if coordinate is None:
         return None
 
     try:
-        position = ast.literal_eval(coordinate)
+        if pd.isna(coordinate):
+            return None
+    except (ValueError, TypeError):
+        return None
+
+    try:
+        position = ast.literal_eval(str(coordinate))
         return float(position[0]), float(position[1])
 
     except (ValueError, TypeError, SyntaxError, IndexError):
@@ -137,6 +143,11 @@ if shot_position is None:
 shot_x, shot_y = shot_position
 
 
+# Originale Schussgeschwindigkeit laden
+original_shot_speed = selected_shot["ShotSpeed"]
+
+
+# Spieler der ausgewählten Spielsituation laden
 players = []
 
 for i in range(1, 13):
@@ -165,28 +176,32 @@ for i in range(1, 13):
     })
 
 
+# Schützen-Slot bestimmen
+shooter_slot = get_shooter_slot(selected_shot)
+
+shooter_index = next(
+    (
+        index
+        for index, player in enumerate(players)
+        if player["slot"] == shooter_slot
+    ),
+    None
+)
+
+
+# Zieltor bestimmen
+goal_x = get_target_goal_x(
+    shot_x,
+    shot_y
+)
+
+
 left, right = st.columns([1.8, 1])
 
 
 with left:
     with st.container(border=True):
         st.subheader("Game Situation")
-
-        shooter_slot = get_shooter_slot(selected_shot)
-
-        shooter_index = next(
-            (
-                index
-                for index, player in enumerate(players)
-                if player["slot"] == shooter_slot
-            ),
-            None
-        )
-
-        goal_x = get_target_goal_x(
-            shot_x,
-            shot_y
-        )
 
         players = draw_movable_rink(
             players,
@@ -198,6 +213,7 @@ with left:
         )
 
 
+# Verschobene Spielerpositionen in die Schussdaten übernehmen
 moved_shot = selected_shot.copy()
 
 for player in players:
@@ -209,25 +225,12 @@ for player in players:
     ])
 
 
+# Datensatz für Pressure-Berechnung aktualisieren
 pressure_df = df.copy()
 pressure_df.loc[selected_index] = moved_shot
 
 
-try:
-    attack_score = calculate_attack_score_for_shot(
-        moved_shot,
-        pressure_df,
-        shooter_slot=shooter_slot,
-        goal_x=goal_x
-    )
-
-except Exception as e:
-    attack_score = None
-    st.error(
-        f"Could not calculate AttackScore: {e}"
-    )
-
-
+# Aktuelle Position des Schützen
 shooter = next(
     (
         player
@@ -250,24 +253,12 @@ else:
     shot_distance = None
 
 
-shot_speed = selected_shot["ShotSpeed"]
-
-
 with right:
     with st.container(border=True):
         st.subheader("Attack Analysis")
 
-        if attack_score is not None:
-            st.metric(
-                "AttackScore",
-                f"{attack_score:.2f} / 100"
-            )
-
-        else:
-            st.metric(
-                "AttackScore",
-                "N/A"
-            )
+        # Platzhalter für den AttackScore
+        score_display = st.empty()
 
         if shooter is not None and is_behind_goal(
             shooter["x"],
@@ -296,14 +287,55 @@ with right:
                 )
 
         with col2:
-            if pd.notna(shot_speed):
-                st.metric(
-                    "Shot Speed",
-                    f"{shot_speed:.1f} km/h"
+            if pd.notna(original_shot_speed):
+                original_shot_speed = float(
+                    original_shot_speed
+                )
+
+                simulated_shot_speed = st.number_input(
+                    "Shot Speed (km/h)",
+                    min_value=0.0,
+                    max_value=200.0,
+                    value=original_shot_speed,
+                    step=0.1,
+                    format="%.1f",
+                    key=f"shot_speed_{selected_index}"
                 )
 
             else:
+                simulated_shot_speed = None
+
                 st.metric(
                     "Shot Speed",
                     "N/A"
                 )
+
+        # AttackScore mit der eingegebenen Geschwindigkeit berechnen
+        try:
+            attack_score = calculate_attack_score_for_shot(
+                moved_shot,
+                pressure_df,
+                shooter_slot=shooter_slot,
+                goal_x=goal_x,
+                shot_speed=simulated_shot_speed
+            )
+
+        except Exception as e:
+            attack_score = None
+
+            st.error(
+                f"Could not calculate AttackScore: {e}"
+            )
+
+        # AttackScore oben anzeigen
+        if attack_score is not None:
+            score_display.metric(
+                "AttackScore",
+                f"{attack_score:.2f} / 100"
+            )
+
+        else:
+            score_display.metric(
+                "AttackScore",
+                "N/A"
+            )
