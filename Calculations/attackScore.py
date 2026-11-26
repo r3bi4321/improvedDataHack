@@ -22,12 +22,12 @@ from Calculations.goaliePositioning import (
 
 
 WEIGHTS = {
-    "D": 2.0,
-    "A": 2.0,
+    "D": 1.0,
+    "A": 1.0,
     "V": 1.0,
     "T": 1.0,
-    "P": 3.0,
-    "C_L": 3.0,
+    "P": 1.1,
+    "C_L":2.0,
     "G": 5.0
 }
 
