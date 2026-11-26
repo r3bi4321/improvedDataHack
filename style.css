@@ -1,8 +1,25 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    font-family: 'Inter', sans-serif;
+}
+
 .stApp {
     background: linear-gradient(135deg, #f3f6ff, #e8efff);
     color: #14233f;
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
+}
+
+.stApp,
+.stApp p,
+.stApp label,
+.stApp span,
+.stApp div,
+.stApp input,
+.stApp button,
+.stApp textarea {
+    font-family: 'Inter', sans-serif;
 }
 
 header[data-testid="stHeader"] {
@@ -93,7 +110,6 @@ header[data-testid="stHeader"] {
     font-weight: 700;
 }
 
-
 [data-testid="stVerticalBlockBorderWrapper"] {
     background-color: rgba(255, 255, 255, 0.9);
     border: 1px solid #d5e0f7;
@@ -112,6 +128,25 @@ header[data-testid="stHeader"] {
     color: #14233f;
     font-size: 32px;
     font-weight: 800;
+}
+
+[data-testid="stNumberInput"] label {
+    color: #172b4d;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+[data-testid="stNumberInput"] input {
+    color: #14233f;
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    background-color: white;
+    border-radius: 10px;
+}
+
+[data-testid="stNumberInput"] button {
+    color: #14233f;
 }
 
 .stButton button {
